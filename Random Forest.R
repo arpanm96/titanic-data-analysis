@@ -1,11 +1,5 @@
-# Trevor Stephens - 18 Jan 2014
-# Titanic: Getting Started With R - Part 5: Random Forests
-# Full guide available at http://trevorstephens.com/
-
-# Set working directory and import datafiles
-setwd("~/Kaggle/Titanic")
-train <- read.csv("train.csv")
-test <- read.csv("test.csv")
+titanic_train <- read.csv("titanic_train.csv")
+titanic_test <- read.csv("titanic_test.csv")
 
 # Install and load required packages for decision trees and forests
 library(rpart)
@@ -14,9 +8,9 @@ library(randomForest)
 install.packages('party')
 library(party)
 
-# Join together the test and train sets for easier feature engineering
-test$Survived <- NA
-combi <- rbind(train, test)
+# Join together the titanic_test and titanic_train sets for easier feature engineering
+titanic_test$Survived <- NA
+combi <- rbind(titanic_train, titanic_test)
 
 # Convert to a string
 combi$Name <- as.character(combi$Name)
@@ -70,26 +64,26 @@ combi$FamilyID2[combi$FamilySize <= 3] <- 'Small'
 # And convert back to factor
 combi$FamilyID2 <- factor(combi$FamilyID2)
 
-# Split back into test and train sets
-train <- combi[1:891,]
-test <- combi[892:1309,]
+# Split back into titanic_test and titanic_train sets
+titanic_train <- combi[1:891,]
+titanic_test <- combi[892:1309,]
 
 # Build Random Forest Ensemble
 set.seed(415)
 fit <- randomForest(as.factor(Survived) ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked + Title + FamilySize + FamilyID2,
-                    data=train, importance=TRUE, ntree=2000)
+                    data=titanic_train, importance=TRUE, ntree=2000)
 # Look at variable importance
 varImpPlot(fit)
 # Now let's make a prediction and write a submission file
-Prediction <- predict(fit, test)
-submit <- data.frame(PassengerId = test$PassengerId, Survived = Prediction)
+Prediction <- predict(fit, titanic_test)
+submit <- data.frame(PassengerId = titanic_test$PassengerId, Survived = Prediction)
 write.csv(submit, file = "firstforest.csv", row.names = FALSE)
 
 # Build condition inference tree Random Forest
 set.seed(415)
-fit <- cforest(as.factor(Survived) ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked + Title + FamilySize + FamilyID,data = train, controls=cforest_unbiased(ntree=2000, mtry=3)) 
+fit <- cforest(as.factor(Survived) ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked + Title + FamilySize + FamilyID,data = titanic_train, controls=cforest_unbiased(ntree=2000, mtry=3)) 
 # Now let's make a prediction and write a submission file
-Prediction <- predict(fit, test, OOB=TRUE, type = "response")
-submit <- data.frame(PassengerId = test$PassengerId, Survived = Prediction)
-write.csv(submit, file = "ciforest21.csv", row.names = FALSE)
+Prediction <- predict(fit, titanic_test, OOB=TRUE, type = "response")
+submit <- data.frame(PassengerId = titanic_test$PassengerId, Survived = Prediction)
+write.csv(submit, file = "rforest.csv", row.names = FALSE)
 
